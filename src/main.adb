@@ -47,6 +47,9 @@ procedure Main
 is
    BG : Bitmap_Color := (Alpha => 255, others => 0);
    Ball_Pos   : Point := (20, 280);
+   Speed : Integer := 0;
+   Gravity : Integer := 2;
+   Is_Down : Boolean := True;
 begin
 
    --  Initialize LCD
@@ -87,7 +90,23 @@ begin
          case State'Length is
             when 1 =>
                Ball_Pos := (State (State'First).X, State (State'First).Y);
-            when others => null;
+            when others =>
+               if Speed <= 0 then
+                  Is_Down := True;
+               end if;
+               if Is_Down then
+                  if Ball_Pos.Y - Speed <= 0 then
+                     Is_Down := False;
+                     Ball_Pos.Y := 0;
+                     Speed := Speed - Gravity;
+                  else
+                     Ball_Pos.Y := Ball_Pos.Y - Speed;
+                     Speed := Speed + Gravity;
+                  end if;
+               else
+                  Ball_Pos.Y := Ball_Pos.Y + Speed;
+                  Speed := Speed - Gravity;
+               end if;
 
          end case;
       end;
