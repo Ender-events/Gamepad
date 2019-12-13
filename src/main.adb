@@ -41,15 +41,18 @@ with HAL.Touch_Panel;       use HAL.Touch_Panel;
 with STM32.User_Button;     use STM32;
 with BMP_Fonts;
 with LCD_Std_Out;
+with gyroscope; use gyroscope;
 
 
 procedure Main
 is
    BG : Bitmap_Color := (Alpha => 255, others => 0);
    Ball_Pos   : Point := (20, 280);
+   Ball_Pos_X : Angle;
    Speed : Integer := 0;
    Gravity : Integer := 2;
    Is_Down : Boolean := True;
+   Axes : Angles := (0, 0, 0);
 begin
 
    --  Initialize LCD
@@ -72,9 +75,20 @@ begin
    LCD_Std_Out.Clear_Screen;
    Display.Update_Layer (1, Copy_Back => True);
 
+   Configure_Gyro;
+
    loop
       if User_Button.Has_Been_Pressed then
          BG := HAL.Bitmap.Dark_Orange;
+      end if;
+      Axes := Get_Raw_Angle;
+      Ball_Pos_X := Angle(Ball_Pos.X) + Axes.Z / 8192;
+      if Ball_Pos_X < 0 then
+         Ball_Pos.X := 0;
+      elsif Ball_Pos_X > 230 then
+         Ball_Pos.X := 230;
+      else
+         Ball_Pos.X := Standard.Natural(Ball_Pos_X);
       end if;
 
       Display.Hidden_Buffer (1).Set_Source (BG);
