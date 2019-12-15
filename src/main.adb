@@ -43,6 +43,10 @@ with BMP_Fonts;
 with LCD_Std_Out;
 with gyroscope; use gyroscope;
 
+with Peripherals_Nonblocking;    use Peripherals_Nonblocking;
+with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
+with Message_Buffers;            use Message_Buffers;
+
 
 procedure Main
 is
@@ -53,6 +57,18 @@ is
    Gravity : Integer := 2;
    Is_Down : Boolean := True;
    Axes : Angles := (0, 0, 0);
+   CR : constant Character := Character'Val(13);
+   LF : constant Character := Character'Val(10);
+   NL : constant String := CR & LF;
+
+   procedure Send (This : String) is
+      Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
+   begin
+      Set (Outgoing, To => This);
+      Put (COM, Outgoing'Unchecked_Access);
+      -- Await_Transmission_Complete (Outgoing);
+      --  We must await xmit completion because Put does not wait
+   end Send;
 begin
 
    --  Initialize LCD
@@ -76,6 +92,12 @@ begin
    Display.Update_Layer (1, Copy_Back => True);
 
    Configure_Gyro;
+
+   -- Initialize UART
+   Initialize(COM);
+   Configure (COM, Baud_Rate => 115_200);
+   Send ("Welcome to bouncing ball simulator." & NL);
+
 
    loop
       if User_Button.Has_Been_Pressed then
@@ -110,6 +132,9 @@ begin
                end if;
                if Is_Down then
                   if Ball_Pos.Y - Speed <= 0 then
+                     if Speed >= 4 then
+                        Send ("Boing!" & NL);
+                     end if;
                      Is_Down := False;
                      Ball_Pos.Y := 0;
                      Speed := Speed - Gravity;
