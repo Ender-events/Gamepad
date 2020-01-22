@@ -46,6 +46,7 @@ with gyroscope; use gyroscope;
 with Peripherals_Nonblocking;    use Peripherals_Nonblocking;
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
 with Message_Buffers;            use Message_Buffers;
+with Ada.Real_Time; use Ada.Real_Time;
 
 
 procedure Main
@@ -60,6 +61,9 @@ is
    CR : constant Character := Character'Val(13);
    LF : constant Character := Character'Val(10);
    NL : constant String := CR & LF;
+   Prev : Time := Clock;
+   Cur : Time;
+   dt : Duration;
 
    procedure Send (This : String) is
       Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
@@ -103,8 +107,11 @@ begin
       if User_Button.Has_Been_Pressed then
          BG := HAL.Bitmap.Dark_Orange;
       end if;
-      Axes := Get_Raw_Angle;
+      Cur := Clock;
+      dt := Ada.Real_Time.To_Duration(Cur - Prev);
+      Axes := Update_Gyro(dt);
       Ball_Pos_X := Angle(Ball_Pos.X) + Axes.Z / 8192;
+      Send(Axes.X'Image & "," & Axes.Y'Image & "," & Axes.Z'Image & NL);
       if Ball_Pos_X < 0 then
          Ball_Pos.X := 0;
       elsif Ball_Pos_X > 230 then
@@ -132,9 +139,6 @@ begin
                end if;
                if Is_Down then
                   if Ball_Pos.Y - Speed <= 0 then
-                     if Speed >= 4 then
-                        Send ("Boing!" & NL);
-                     end if;
                      Is_Down := False;
                      Ball_Pos.Y := 0;
                      Speed := Speed - Gravity;

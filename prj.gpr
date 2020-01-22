@@ -7,12 +7,19 @@ project Prj extends "examples/shared/common/common.gpr" is
    for Create_Missing_Dirs use "True";
    for Main use ("main.adb");
    for Source_Dirs use ("src/**");
+   for Target use "arm-eabi";
 
    package Linker is
-      for Default_Switches ("ada") use ("-Wl,--gc-sections", "-Wl,--print-memory-usage");
+      for Default_Switches ("ada") use ("-Wl,--gc-sections", "-Wl,--print-memory-usage", "-g");
    end Linker;
 
-   for Target use "arm-eabi";
+   package Compiler is
+      for Switches ("ada") use ("-g");
+   end Compiler;
+
+   package Builder is
+      for Switches ("ada") use ("-g");
+   end Builder;
 
 end Prj;
 
