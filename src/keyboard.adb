@@ -1,3 +1,5 @@
+with Message_Buffers;            use Message_Buffers;
+
 package body keyboard is
 
    procedure Initiliaze_Keyboard (kb : in out Keyboard) is
@@ -40,6 +42,22 @@ package body keyboard is
          end loop;
          kb.report.Keypress(J) := None;
       end if;
+   end;
+
+   procedure Send_Report (This : in out Keyboard;
+                          uart : in out Serial_Port) is
+      Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
+      data : String(1 .. 8) := (others => Character'Val(0));
+      key_status : Key_Status_Type := This.report.Key_Status;
+      key_status_buf : Character
+        with Address => key_status'Address;
+   begin
+      data(1) := key_status_buf;
+      for I in Keypress_array_index loop
+         data(Integer(I + 2)) := Character'Val(This.report.Keypress(I)'Enum_Rep);
+      end loop;
+      Outgoing.Set(data);
+      uart.Put(Outgoing'Unchecked_Access);
    end;
 
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean is

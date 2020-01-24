@@ -1,3 +1,5 @@
+with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
+
 package keyboard is
 
    type Keyboard is tagged limited private;
@@ -51,7 +53,8 @@ package keyboard is
       Right_Shift : Boolean;
       Right_Alt : Boolean;
       Right_GUI : Boolean;
-   end record;
+   end record
+     with Size => 8;
 
    for Key_Status_Type use record
       Left_Ctrl at 0 range 0 .. 0;
@@ -74,6 +77,8 @@ package keyboard is
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean;
    procedure Key_Press (kb : in out keyboard; key : KeyCode);
    procedure Key_Release (kb : in out keyboard; key : KeyCode);
+   procedure Send_Report (This : in out Keyboard;
+                          uart : in out Serial_Port);
 
 private
    type Keyboard is tagged limited record

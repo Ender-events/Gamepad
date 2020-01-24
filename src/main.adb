@@ -42,7 +42,7 @@ with STM32.User_Button;     use STM32;
 with BMP_Fonts;
 with LCD_Std_Out;
 with gyroscope; use gyroscope;
-with keyboard;
+with keyboard;              use keyboard;
 
 with Peripherals_Nonblocking;    use Peripherals_Nonblocking;
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
@@ -65,6 +65,7 @@ is
    Prev : Time := Clock;
    Cur : Time;
    dt : Duration;
+   kb : keyboard.Keyboard;
 
    procedure Send (This : String) is
       Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
@@ -101,18 +102,22 @@ begin
    -- Initialize UART
    Initialize(COM);
    Configure (COM, Baud_Rate => 115_200);
-   Send ("Welcome to bouncing ball simulator." & NL);
+   kb.Initiliaze_Keyboard;
+   kb.Key_Press(key => Left_Shift);
+   kb.Key_Press(key => Right_GUI);
+   kb.Key_Press(key => Z);
+   kb.Key_Press(key => Q);
 
 
    loop
       if User_Button.Has_Been_Pressed then
          BG := HAL.Bitmap.Dark_Orange;
+         kb.Send_Report(COM);
       end if;
       Cur := Clock;
       dt := Ada.Real_Time.To_Duration(Cur - Prev);
       Axes := Update_Gyro(dt);
       Ball_Pos_X := Angle(Ball_Pos.X) + Axes.Z / 8192;
-      Send(Axes.X'Image & "," & Axes.Y'Image & "," & Axes.Z'Image & NL);
       if Ball_Pos_X < 0 then
          Ball_Pos.X := 0;
       elsif Ball_Pos_X > 230 then
