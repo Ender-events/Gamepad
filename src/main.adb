@@ -42,6 +42,7 @@ with STM32.User_Button;     use STM32;
 with BMP_Fonts;
 with LCD_Std_Out;
 with gyroscope; use gyroscope;
+with keyboard;
 
 with Peripherals_Nonblocking;    use Peripherals_Nonblocking;
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
