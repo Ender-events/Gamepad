@@ -62,10 +62,64 @@ is
    CR : constant Character := Character'Val(13);
    LF : constant Character := Character'Val(10);
    NL : constant String := CR & LF;
+   Width : constant Angle := 300;
+   Height : constant Angle := 220;
    Prev : Time := Clock;
    Cur : Time;
    dt : Duration;
    kb : keyboard.Keyboard;
+
+
+   function Gyro_To_Keyboard (gyro: Angles; kb: in out keyboard.Keyboard) return Boolean is
+      change: Boolean := False;
+   begin
+      if gyro.X > 15 and then not kb.Is_Key_Press(key => Q) then
+         kb.Key_Press(key => Q);
+         change := True;
+      elsif kb.Is_Key_Press(key => Q) then
+         kb.Key_Release(key => Q);
+         change := True;
+      end if;
+      if gyro.X < -15 and then not kb.Is_Key_Press(key => D) then
+         kb.Key_Press(key => D);
+         change := True;
+      elsif kb.Is_Key_Press(key => D) then
+         kb.Key_Release(key => D);
+         change := True;
+      end if;
+      if gyro.Y < -15 and then not kb.Is_Key_Press(key => Z) then
+         kb.Key_Press(key => Z);
+         change := True;
+      elsif kb.Is_Key_Press(key => Z) then
+         kb.Key_Release(key => Z);
+         change := True;
+      end if;
+      if gyro.Y > 15 and then not kb.Is_Key_Press(key => S) then
+         kb.Key_Press(key => S);
+         change := True;
+      elsif kb.Is_Key_Press(key => S) then
+         kb.Key_Release(key => S);
+         change := True;
+      end if;
+      -- TODO: Use radius instead ?
+      if ((gyro.X > 15 and then gyro.X < 40) or else (gyro.Y > 15 and then gyro.Y < 40))
+        and then not kb.Is_Key_Press(key => Left_Ctrl) then
+         kb.Key_Press(key => Left_Ctrl);
+         change := True;
+      elsif kb.Is_Key_Press(key => Left_Ctrl) then
+         kb.Key_Release(key => Left_Ctrl);
+         change := True;
+      end if;
+      if gyro.X > 65 and then not kb.Is_Key_Press(key => Left_Shift)
+          and then gyro.Y > 65 then
+         kb.Key_Press(key => Left_Shift);
+         change := True;
+      elsif kb.Is_Key_Press(key => Left_Shift) then
+         kb.Key_Release(key => Left_Shift);
+         change := True;
+      end if;
+      return change;
+   end;
 
    procedure Send (This : String) is
       Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
@@ -122,10 +176,10 @@ begin
    Initialize(COM);
    Configure (COM, Baud_Rate => 115_200);
    kb.Initiliaze_Keyboard;
-   kb.Key_Press(key => Left_Shift);
-   kb.Key_Press(key => Right_GUI);
-   kb.Key_Press(key => Z);
-   kb.Key_Press(key => Q);
+   -- kb.Key_Press(key => Left_Shift);
+   -- kb.Key_Press(key => Right_GUI);
+   -- kb.Key_Press(key => Z);
+   -- kb.Key_Press(key => Q);
 
 
    loop
@@ -137,9 +191,24 @@ begin
       dt := Ada.Real_Time.To_Duration(Cur - Prev);
       Prev := Cur;
       Axes := Update_Gyro(dt);
-
-      Ball_Pos.X := Standard.Natural(Angle(Middle_Pos.X) + Axes.Y);
-      Ball_Pos.Y := Standard.Natural(Angle(Middle_Pos.Y) + Axes.X);
+      -- Send(Axes.X'Image & "," & Axes.Y'Image & "," & Axes.Z'Image & NL);
+      declare
+         Pos_X : Angle := Angle(Middle_Pos.X) + Axes.Y;
+         Pos_Y : Angle := Angle(Middle_Pos.Y) + Axes.X;
+      begin
+         if Pos_X < 10 then
+            Pos_X := 10;
+         elsif Pos_X > Width then
+            Pos_X := Width;
+         end if;
+         if Pos_Y < 10 then
+            Pos_Y := 10;
+         elsif Pos_Y > Height then
+            Pos_Y := Height;
+         end if;
+         Ball_Pos.X := Standard.Natural(Pos_X);
+         Ball_Pos.Y := Standard.Natural(Pos_Y);
+      end;
       Background_Display;
 
       declare

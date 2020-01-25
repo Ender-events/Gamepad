@@ -41,7 +41,29 @@ package body keyboard is
             end if;
          end loop;
          kb.report.Keypress(J) := None;
+         kb.nb_key := kb.nb_key - 1;
       end if;
+   end;
+
+   function Is_Key_Press(This : in out Keyboard; key : KeyCode) return Boolean is
+   begin
+      case key is
+         when Left_Shift => return This.report.Key_Status.Left_Shift;
+         when Left_Ctrl => return This.report.Key_Status.Left_Ctrl;
+         when Left_Alt => return This.report.Key_Status.Left_Alt;
+         when Left_GUI => return This.report.Key_Status.Left_GUI;
+         when Right_Shift => return This.report.Key_Status.Right_Shift;
+         when Right_Ctrl => return This.report.Key_Status.Right_Ctrl;
+         when Right_Alt => return This.report.Key_Status.Right_Alt;
+         when Right_GUI => return This.report.Key_Status.Right_GUI;
+         when others =>
+            for I in Keypress_array_index'Range loop
+               if This.report.Keypress(I) = key then
+                  return True;
+               end if;
+            end loop;
+            return False;
+      end case;
    end;
 
    procedure Send_Report (This : in out Keyboard;
