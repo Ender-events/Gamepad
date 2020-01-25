@@ -116,6 +116,7 @@ begin
       end if;
       Cur := Clock;
       dt := Ada.Real_Time.To_Duration(Cur - Prev);
+      Prev := Cur;
       Axes := Update_Gyro(dt);
       Ball_Pos_X := Angle(Ball_Pos.X) + Axes.Z / 8192;
       if Ball_Pos_X < 0 then
