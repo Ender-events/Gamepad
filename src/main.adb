@@ -53,8 +53,8 @@ with Ada.Real_Time; use Ada.Real_Time;
 procedure Main
 is
    BG : Bitmap_Color := (Alpha => 255, others => 0);
-   Ball_Pos   : Point := (20, 280);
-   Ball_Pos_X : Angle;
+   Middle_Pos   : constant Point := (110, 150);
+   Ball_Pos   : Point := Middle_Pos;
    Speed : Integer := 0;
    Gravity : Integer := 2;
    Is_Down : Boolean := True;
@@ -75,6 +75,25 @@ is
       -- Await_Transmission_Complete (Outgoing);
       --  We must await xmit completion because Put does not wait
    end Send;
+
+   procedure Background_Display is
+      Black : Bitmap_Color := (Alpha => 255, others => 0);
+   begin
+      Display.Hidden_Buffer (1).Set_Source (BG);
+      Display.Hidden_Buffer (1).Fill;
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Red);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 90);
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Yellow);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 65);
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Green);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 40);
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.White_Smoke);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 15);
+   end;
 begin
 
    --  Initialize LCD
@@ -118,48 +137,22 @@ begin
       dt := Ada.Real_Time.To_Duration(Cur - Prev);
       Prev := Cur;
       Axes := Update_Gyro(dt);
-      Ball_Pos_X := Angle(Ball_Pos.X) + Axes.Z / 8192;
-      if Ball_Pos_X < 0 then
-         Ball_Pos.X := 0;
-      elsif Ball_Pos_X > 230 then
-         Ball_Pos.X := 230;
-      else
-         Ball_Pos.X := Standard.Natural(Ball_Pos_X);
-      end if;
 
-      Display.Hidden_Buffer (1).Set_Source (BG);
-      Display.Hidden_Buffer (1).Fill;
-
-      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
-      Display.Hidden_Buffer (1).Fill_Circle (Ball_Pos, 10);
-
+      Ball_Pos.X := Standard.Natural(Angle(Middle_Pos.X) + Axes.Y);
+      Ball_Pos.Y := Standard.Natural(Angle(Middle_Pos.Y) + Axes.X);
+      Background_Display;
 
       declare
          State : constant TP_State := Touch_Panel.Get_All_Touch_Points;
       begin
-         case State'Length is
-            when 1 =>
-               Ball_Pos := (State (State'First).X, State (State'First).Y);
-            when others =>
-               if Speed <= 0 then
-                  Is_Down := True;
-               end if;
-               if Is_Down then
-                  if Ball_Pos.Y - Speed <= 0 then
-                     Is_Down := False;
-                     Ball_Pos.Y := 0;
-                     Speed := Speed - Gravity;
-                  else
-                     Ball_Pos.Y := Ball_Pos.Y - Speed;
-                     Speed := Speed + Gravity;
-                  end if;
-               else
-                  Ball_Pos.Y := Ball_Pos.Y + Speed;
-                  Speed := Speed - Gravity;
-               end if;
-
-         end case;
+         if State'Length = 1 then
+            Ball_Pos := Middle_Pos;
+            gyroscope.Reset_Gyro;
+         end if;
       end;
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
+      Display.Hidden_Buffer (1).Fill_Circle (Ball_Pos, 5);
 
       --  Update screen
       Display.Update_Layer (1, Copy_Back => True);

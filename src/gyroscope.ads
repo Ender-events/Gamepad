@@ -19,6 +19,7 @@ package gyroscope is
    end record;
 
    procedure Configure_Gyro;
+   procedure Reset_Gyro;
    function Update_Gyro (dt: Duration) return Angles;
 
 end gyroscope;
