@@ -73,47 +73,40 @@ is
    function Gyro_To_Keyboard (gyro: Angles; kb: in out keyboard.Keyboard) return Boolean is
       change: Boolean := False;
    begin
-      if gyro.X > 15 and then not kb.Is_Key_Press(key => Q) then
-         kb.Key_Press(key => Q);
-         change := True;
+      if gyro.X > 15 then
+         change := kb.Checked_Key_Press(key => Q) or change;
       elsif kb.Is_Key_Press(key => Q) then
          kb.Key_Release(key => Q);
          change := True;
       end if;
-      if gyro.X < -15 and then not kb.Is_Key_Press(key => D) then
-         kb.Key_Press(key => D);
-         change := True;
+      if gyro.X < -15 then
+         change := kb.Checked_Key_Press(key => D) or change;
       elsif kb.Is_Key_Press(key => D) then
          kb.Key_Release(key => D);
          change := True;
       end if;
-      if gyro.Y < -15 and then not kb.Is_Key_Press(key => Z) then
-         kb.Key_Press(key => Z);
-         change := True;
+      if gyro.Y < -15 then
+         change := kb.Checked_Key_Press(key => Z) or change;
       elsif kb.Is_Key_Press(key => Z) then
          kb.Key_Release(key => Z);
          change := True;
       end if;
-      if gyro.Y > 15 and then not kb.Is_Key_Press(key => S) then
-         kb.Key_Press(key => S);
-         change := True;
+      if gyro.Y > 15 then
+         change := kb.Checked_Key_Press(key => S) or change;
       elsif kb.Is_Key_Press(key => S) then
          kb.Key_Release(key => S);
          change := True;
       end if;
       -- TODO: Use radius instead ?
       if ((gyro.X > 15 and then gyro.X < 40) or else (gyro.Y > 15 and then gyro.Y < 40))
-        and then not kb.Is_Key_Press(key => Left_Ctrl) then
-         kb.Key_Press(key => Left_Ctrl);
-         change := True;
+        or else ((gyro.X < -15 and then gyro.X > -40) or else (gyro.Y < -15 and then gyro.Y > -40)) then
+         change := kb.Checked_Key_Press(key => Left_Ctrl) or change;
       elsif kb.Is_Key_Press(key => Left_Ctrl) then
          kb.Key_Release(key => Left_Ctrl);
          change := True;
       end if;
-      if gyro.X > 65 and then not kb.Is_Key_Press(key => Left_Shift)
-          and then gyro.Y > 65 then
-         kb.Key_Press(key => Left_Shift);
-         change := True;
+      if gyro.X > 65 or else gyro.Y > 65  or else gyro.X < -65 or else gyro.Y < -65 then
+         change := kb.Checked_Key_Press(key => Left_Shift) or change;
       elsif kb.Is_Key_Press(key => Left_Shift) then
          kb.Key_Release(key => Left_Shift);
          change := True;

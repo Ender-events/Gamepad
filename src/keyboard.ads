@@ -76,6 +76,7 @@ package keyboard is
    procedure Initiliaze_Keyboard (kb : in out Keyboard);
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean;
    procedure Key_Press (kb : in out keyboard; key : KeyCode);
+   function Checked_Key_Press (This : in out keyboard; key : KeyCode) return Boolean;
    procedure Key_Release (kb : in out keyboard; key : KeyCode);
    function Is_Key_Press(This : in out Keyboard; key : KeyCode) return Boolean;
    procedure Send_Report (This : in out Keyboard;

@@ -17,6 +17,16 @@ package body keyboard is
       kb.have_events := False;
    end;
 
+   function Checked_Key_Press (This : in out keyboard; key : KeyCode) return Boolean is
+   begin
+      if This.Is_Key_Press(key) then
+         return False;
+      else
+         This.Key_Press(key);
+         return True;
+      end if;
+   end;
+
    procedure Key_Press (kb : in out keyboard; key : KeyCode) is
    begin
       if Is_Modifier_Status_Key(key) then
