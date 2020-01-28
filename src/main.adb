@@ -50,8 +50,7 @@ with Message_Buffers;            use Message_Buffers;
 with Ada.Real_Time; use Ada.Real_Time;
 
 
-procedure Main
-is
+procedure Main is
    BG : Bitmap_Color := (Alpha => 255, others => 0);
    Middle_Pos   : constant Point := (110, 150);
    Ball_Pos   : Point := Middle_Pos;
@@ -168,6 +167,7 @@ begin
    -- Initialize UART
    Initialize(COM);
    Configure (COM, Baud_Rate => 115_200);
+   -- Send ("Welcome to bouncing ball simulator." & NL);
    kb.Initiliaze_Keyboard;
    -- kb.Key_Press(key => Left_Shift);
    -- kb.Key_Press(key => Right_GUI);
@@ -212,6 +212,10 @@ begin
             gyroscope.Reset_Gyro;
          end if;
       end;
+
+      if Gyro_To_Keyboard(Axes, kb) then
+         kb.Send_Report(COM);
+      end if;
 
       Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
       Display.Hidden_Buffer (1).Fill_Circle (Ball_Pos, 5);

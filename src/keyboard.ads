@@ -1,8 +1,8 @@
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
 
-package keyboard is
-
-   type Keyboard is tagged limited private;
+package keyboard
+with SPARK_Mode => On
+is
 
    type KeyCode is
      (
@@ -39,7 +39,8 @@ package keyboard is
       Right_Shift     => 16#e5#,
       Right_Alt       => 16#e6#,
       Right_GUI       => 16#e7#
-      );
+     );
+   subtype KeyCodeModifier is KeyCode range Left_Ctrl .. Right_GUI;
 
    type Keypress_array_index is range 1 .. 6;
    type Keypress_array is array (Keypress_array_index) of KeyCode;
@@ -73,24 +74,83 @@ package keyboard is
       Keypress : Keypress_array;
    end record;
 
-   procedure Initiliaze_Keyboard (kb : in out Keyboard);
-   function Is_Modifier_Status_Key (key : KeyCode) return Boolean;
-   procedure Key_Press (kb : in out keyboard; key : KeyCode);
-   function Checked_Key_Press (This : in out keyboard; key : KeyCode) return Boolean;
-   procedure Key_Release (kb : in out keyboard; key : KeyCode);
-   function Is_Key_Press(This : in out Keyboard; key : KeyCode) return Boolean;
-   procedure Send_Report (This : in out Keyboard;
-                          uart : in out Serial_Port);
-
-private
    type Keyboard is tagged limited record
       report : Report_Format;
       nb_key : Integer range 0 .. 6;
       have_events : Boolean;
-   end record;
+      Initialized : Boolean := False;
+   end record
+     with Dynamic_Predicate =>
+       ((nb_key = 0) or else (for all I in Keypress_array'First .. Keypress_array_index(nb_key) => report.Keypress(I) /= None)) and
+       ((nb_key = Integer(Keypress_array'Last)) or else
+          (for all I in Keypress_array_index(nb_key + 1) .. Keypress_array'Last => report.Keypress(I) = None));
+
+   function Nb_Key_Test(This : Keyboard) return Integer with Ghost;
+
+   procedure Initiliaze_Keyboard (This : out Keyboard)
+     with
+       Global => null,
+       Post'Class => This.Initialized = True;
+   function Is_Modifier_Status_Key (key : KeyCode) return Boolean
+     with
+       Global => null,
+       Post => Is_Modifier_Status_Key'Result = ((key = Left_Ctrl
+              or else key = Left_Shift
+              or else key = Left_Alt
+              or else key = Left_GUI
+              or else key = Right_Ctrl
+              or else key = Right_Shift
+              or else key = Right_Alt
+              or else key = Right_GUI));
+
+   procedure Key_Press (kb : in out keyboard; key : KeyCode)
+     with
+       Global => null,
+       Pre'Class => kb.Initialized = True and then key /= None and then kb.Nb_Key_Test < Integer(Keypress_array_index'Last);
+   function Checked_Key_Press (This : in out keyboard; key : KeyCode) return Boolean
+     with
+       SPARK_Mode => Off,
+       Global => null,
+       Pre'Class => This.Initialized = True;
+
+   procedure Key_Release (kb : in out keyboard; key : KeyCode)
+     with
+       Global => null,
+       Pre'Class => kb.Initialized = True and then key /= None and then kb.Nb_Key_Test > 0 and then kb.Is_Key_Press(key);
+
+   function Is_Key_Press(This : in Keyboard; key : KeyCode) return Boolean
+     with
+       Global => null,
+       Pre'Class => This.Initialized = True,
+       Post'Class => (case key is
+         when Left_Shift => This.report.Key_Status.Left_Shift = Is_Key_Press'Result,
+         when Left_Ctrl => This.report.Key_Status.Left_Ctrl = Is_Key_Press'Result,
+         when Left_Alt => This.report.Key_Status.Left_Alt = Is_Key_Press'Result,
+         when Left_GUI => This.report.Key_Status.Left_GUI = Is_Key_Press'Result,
+         when Right_Shift => This.report.Key_Status.Right_Shift = Is_Key_Press'Result,
+         when Right_Ctrl => This.report.Key_Status.Right_Ctrl = Is_Key_Press'Result,
+         when Right_Alt => This.report.Key_Status.Right_Alt = Is_Key_Press'Result,
+         when Right_GUI => This.report.Key_Status.Right_GUI = Is_Key_Press'Result,
+         when others => (if (Is_Key_Press'Result) then
+                        (for some I in Keypress_array'Range => This.report.Keypress(I) = key)
+                          else
+                           (for all I in Keypress_array'Range => This.report.Keypress(I) /= key)
+                        ));
+
+   procedure Send_Report (This : in out Keyboard;
+                          uart : in out Serial_Port)
+     with
+       SPARK_Mode => Off,
+       Global => null,
+       Pre'Class => This.Initialized = True;
+
+private
 
    procedure Update_Modifier_Status_Key (kb : in out keyboard;
                                          key : KeyCode;
-                                         status : Boolean);
+                                         status : Boolean)
+     with
+       Global => null,
+       Pre'Class => kb.Initialized = True and then Is_Modifier_Status_Key(key);
 
 end keyboard;
