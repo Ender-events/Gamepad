@@ -40,6 +40,7 @@ is
    procedure Key_Release (kb : in out keyboard; key : KeyCode) is
       J : Keypress_array_index := 1;
    begin
+      pragma Assert(kb.Is_Key_Press(key));
       if Is_Modifier_Status_Key(key) then
          Update_Modifier_Status_Key(kb, key, False);
       else
