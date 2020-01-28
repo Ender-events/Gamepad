@@ -100,14 +100,7 @@ is
 
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean is
    begin
-      return (key = Left_Ctrl
-              or else key = Left_Shift
-              or else key = Left_Alt
-              or else key = Left_GUI
-              or else key = Right_Ctrl
-              or else key = Right_Shift
-              or else key = Right_Alt
-              or else key = Right_GUI);
+      return key in CtrlKeyCode;
    end;
 
 

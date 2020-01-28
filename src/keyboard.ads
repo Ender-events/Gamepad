@@ -40,7 +40,8 @@ is
       Right_Alt       => 16#e6#,
       Right_GUI       => 16#e7#
      );
-   subtype KeyCodeModifier is KeyCode range Left_Ctrl .. Right_GUI;
+
+   subtype CtrlKeyCode is KeyCode range Left_Ctrl .. Right_GUI;
 
    type Keypress_array_index is range 1 .. 6;
    type Keypress_array is array (Keypress_array_index) of KeyCode;
