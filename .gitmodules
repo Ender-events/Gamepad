@@ -1,0 +1,4 @@
+[submodule "Ada_Drivers_Library"]
+	path = Ada_Drivers_Library
+	url = https://github.com/DarkCookies/Ada_Drivers_Library
+	branch = stm32_usb
