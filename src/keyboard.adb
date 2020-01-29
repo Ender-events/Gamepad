@@ -81,7 +81,7 @@ is
    end;
 
    procedure Send_Report (This : in out Keyboard;
-                          uart : in out Serial_Port)
+                          uart : in out IO_Interface.IO_InterfaceNT'Class)
      with SPARK_Mode => Off -- Can't use spark with uart
    is
       Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
@@ -95,7 +95,7 @@ is
          data(Integer(I + 2)) := Character'Val(This.report.Keypress(I)'Enum_Rep);
       end loop;
       Outgoing.Set(data);
-      uart.Put(Outgoing'Unchecked_Access);
+      --uart.Write(Outgoing'Unchecked_Access);
    end;
 
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean is

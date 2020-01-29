@@ -48,6 +48,7 @@ with Peripherals_Nonblocking;    use Peripherals_Nonblocking;
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
 with Message_Buffers;            use Message_Buffers;
 with Ada.Real_Time; use Ada.Real_Time;
+with UART_Interface;
 
 
 procedure Main is
@@ -67,6 +68,7 @@ procedure Main is
    Cur : Time;
    dt : Duration;
    kb : keyboard.Keyboard;
+   uart : UART_Interface.UART_InterfaceNT;
 
 
    function Gyro_To_Keyboard (gyro: Angles; kb: in out keyboard.Keyboard) return Boolean is
@@ -165,8 +167,12 @@ begin
    Configure_Gyro;
 
    -- Initialize UART
-   Initialize(COM);
-   Configure (COM, Baud_Rate => 115_200);
+   uart.Initiliaze_UART;
+
+   -- FIXME - a mettre dans uart_interface
+   --Initialize(COM);
+   --Configure (COM, Baud_Rate => 115_200);
+
    -- Send ("Welcome to bouncing ball simulator." & NL);
    kb.Initiliaze_Keyboard;
    -- kb.Key_Press(key => Left_Shift);
@@ -178,7 +184,7 @@ begin
    loop
       if User_Button.Has_Been_Pressed then
          BG := HAL.Bitmap.Dark_Orange;
-         kb.Send_Report(COM);
+         kb.Send_Report(uart);
       end if;
       Cur := Clock;
       dt := Ada.Real_Time.To_Duration(Cur - Prev);
@@ -214,7 +220,7 @@ begin
       end;
 
       if Gyro_To_Keyboard(Axes, kb) then
-         kb.Send_Report(COM);
+         kb.Send_Report(uart);
       end if;
 
       Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);

@@ -1,4 +1,5 @@
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
+with IO_Interface;
 
 package keyboard
 with SPARK_Mode => On
@@ -125,7 +126,7 @@ is
        Pre'Class => This.Initialized = True;
 
    procedure Send_Report (This : in out Keyboard;
-                          uart : in out Serial_Port)
+                          uart : in out IO_Interface.IO_InterfaceNT'Class)
      with
        SPARK_Mode => Off,
        Global => null,
