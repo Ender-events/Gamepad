@@ -55,6 +55,15 @@ package body gyroscope is
       return Axes;
    end;
 
+   function Convert_To_Degree(axes : AnglesDegree) return AnglesDegree is
+      res : AnglesDegree := axes;
+   begin
+      res.X := res.X / (65.536 * 2.0);
+      res.Y := res.Y / (65.536 * 2.0);
+      res.Z := res.Z / (65.536 * 2.0);
+      return res;
+   end;
+
    procedure Configure_Gyro is
    begin
       --  Init the on-board gyro SPI and GPIO. This is board-specific, not
@@ -87,7 +96,9 @@ package body gyroscope is
 
    function Update_Gyro (dt: Duration) return Angles is
       Axes_Cur: L3GD20.Angle_Rates;
-      Threshold: constant Float := 128.0;
+      Axes_fix: AnglesDegree;
+      Threshold: constant Float := 1.0;
+      dt_float: Float := Float(dt);
       alpha: Float;
    begin
       if not Gyro.Data_Status.ZYX_Available then
@@ -96,11 +107,15 @@ package body gyroscope is
 
       Gyro.Get_Raw_Angle_Rates (Axes_Cur);
 
-
-      alpha := 0.8 / (0.8 + Float(dt));
-      Axes_HP.X := Axes_HP.X + alpha * (Float(Axes_Cur.X) - Axes_Offset.X - Axes_HP.X);
-      Axes_HP.Y := Axes_HP.Y + alpha * (Float(Axes_Cur.Y) - Axes_Offset.Y - Axes_HP.Y);
-      Axes_HP.Z := Axes_HP.Z + alpha * (Float(Axes_Cur.Z) - Axes_Offset.Z - Axes_HP.Z);
+      Axes_fix := To_AnglesDegree(To_Angles(Axes_Cur));
+      Axes_fix.X := Axes_fix.X - Axes_Offset.X;
+      Axes_fix.Y := Axes_fix.Y - Axes_Offset.Y;
+      Axes_fix.Z := Axes_fix.Z - Axes_Offset.Z;
+      Axes_fix := Convert_To_Degree(Axes_fix);
+      alpha := 0.8 / (0.8 + dt_float);
+      Axes_HP.X := Axes_HP.X + alpha * (Axes_fix.X - Axes_HP.X);
+      Axes_HP.Y := Axes_HP.Y + alpha * (Axes_fix.Y - Axes_HP.Y);
+      Axes_HP.Z := Axes_HP.Z + alpha * (Axes_fix.Z - Axes_HP.Z);
 
       if Axes_HP.X >= -Threshold and then Axes_HP.X <= Threshold then
          Axes_HP.X := 0.0;
@@ -111,9 +126,9 @@ package body gyroscope is
       if Axes_HP.Z >= -Threshold and then Axes_HP.Z <= Threshold then
          Axes_HP.Z := 0.0;
       end if;
-      Axes.X := Axes.X + Angle(Axes_HP.X);
-      Axes.Y := Axes.Y + Angle(Axes_HP.Y);
-      Axes.Z := Axes.Z + Angle(Axes_HP.Z);
+      Axes.X := Axes.X + Angle(Axes_HP.X * dt_float);
+      Axes.Y := Axes.Y + Angle(Axes_HP.Y * dt_float);
+      Axes.Z := Axes.Z + Angle(Axes_HP.Z * dt_float);
       return Axes;
    end;
 

@@ -42,18 +42,19 @@ with STM32.User_Button;     use STM32;
 with BMP_Fonts;
 with LCD_Std_Out;
 with gyroscope; use gyroscope;
+with keyboard;              use keyboard;
 
 with Peripherals_Nonblocking;    use Peripherals_Nonblocking;
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
 with Message_Buffers;            use Message_Buffers;
 with Ada.Real_Time; use Ada.Real_Time;
+with UART_Interface;
 
 
-procedure Main
-is
+procedure Main is
    BG : Bitmap_Color := (Alpha => 255, others => 0);
-   Ball_Pos   : Point := (20, 280);
-   Ball_Pos_X : Angle;
+   Middle_Pos   : constant Point := (110, 150);
+   Ball_Pos   : Point := Middle_Pos;
    Speed : Integer := 0;
    Gravity : Integer := 2;
    Is_Down : Boolean := True;
@@ -61,9 +62,58 @@ is
    CR : constant Character := Character'Val(13);
    LF : constant Character := Character'Val(10);
    NL : constant String := CR & LF;
+   Width : constant Angle := 300;
+   Height : constant Angle := 220;
    Prev : Time := Clock;
    Cur : Time;
    dt : Duration;
+   kb : keyboard.Keyboard;
+   uart : UART_Interface.UART_InterfaceNT;
+
+
+   function Gyro_To_Keyboard (gyro: Angles; kb: in out keyboard.Keyboard) return Boolean is
+      change: Boolean := False;
+   begin
+      if gyro.X > 15 then
+         change := kb.Checked_Key_Press(key => Q) or change;
+      elsif kb.Is_Key_Press(key => Q) then
+         kb.Key_Release(key => Q);
+         change := True;
+      end if;
+      if gyro.X < -15 then
+         change := kb.Checked_Key_Press(key => D) or change;
+      elsif kb.Is_Key_Press(key => D) then
+         kb.Key_Release(key => D);
+         change := True;
+      end if;
+      if gyro.Y < -15 then
+         change := kb.Checked_Key_Press(key => Z) or change;
+      elsif kb.Is_Key_Press(key => Z) then
+         kb.Key_Release(key => Z);
+         change := True;
+      end if;
+      if gyro.Y > 15 then
+         change := kb.Checked_Key_Press(key => S) or change;
+      elsif kb.Is_Key_Press(key => S) then
+         kb.Key_Release(key => S);
+         change := True;
+      end if;
+      -- TODO: Use radius instead ?
+      if ((gyro.X > 15 and then gyro.X < 40) or else (gyro.Y > 15 and then gyro.Y < 40))
+        or else ((gyro.X < -15 and then gyro.X > -40) or else (gyro.Y < -15 and then gyro.Y > -40)) then
+         change := kb.Checked_Key_Press(key => Left_Ctrl) or change;
+      elsif kb.Is_Key_Press(key => Left_Ctrl) then
+         kb.Key_Release(key => Left_Ctrl);
+         change := True;
+      end if;
+      if gyro.X > 65 or else gyro.Y > 65  or else gyro.X < -65 or else gyro.Y < -65 then
+         change := kb.Checked_Key_Press(key => Left_Shift) or change;
+      elsif kb.Is_Key_Press(key => Left_Shift) then
+         kb.Key_Release(key => Left_Shift);
+         change := True;
+      end if;
+      return change;
+   end;
 
    procedure Send (This : String) is
       Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
@@ -73,6 +123,25 @@ is
       -- Await_Transmission_Complete (Outgoing);
       --  We must await xmit completion because Put does not wait
    end Send;
+
+   procedure Background_Display is
+      Black : Bitmap_Color := (Alpha => 255, others => 0);
+   begin
+      Display.Hidden_Buffer (1).Set_Source (BG);
+      Display.Hidden_Buffer (1).Fill;
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Red);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 90);
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Yellow);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 65);
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Green);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 40);
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.White_Smoke);
+      Display.Hidden_Buffer (1).Fill_Circle (Middle_Pos, 15);
+   end;
 begin
 
    --  Initialize LCD
@@ -98,61 +167,59 @@ begin
    Configure_Gyro;
 
    -- Initialize UART
-   Initialize(COM);
-   Configure (COM, Baud_Rate => 115_200);
-   Send ("Welcome to bouncing ball simulator." & NL);
+   uart.Initiliaze_UART;
+   -- Send ("Welcome to bouncing ball simulator." & NL);
+   kb.Initiliaze_Keyboard;
+   -- kb.Key_Press(key => Left_Shift);
+   -- kb.Key_Press(key => Right_GUI);
+   -- kb.Key_Press(key => Z);
+   -- kb.Key_Press(key => Q);
 
 
    loop
       if User_Button.Has_Been_Pressed then
          BG := HAL.Bitmap.Dark_Orange;
+         kb.Send_Report(uart);
       end if;
       Cur := Clock;
       dt := Ada.Real_Time.To_Duration(Cur - Prev);
+      Prev := Cur;
       Axes := Update_Gyro(dt);
-      Ball_Pos_X := Angle(Ball_Pos.X) + Axes.Z / 8192;
-      Send(Axes.X'Image & "," & Axes.Y'Image & "," & Axes.Z'Image & NL);
-      if Ball_Pos_X < 0 then
-         Ball_Pos.X := 0;
-      elsif Ball_Pos_X > 230 then
-         Ball_Pos.X := 230;
-      else
-         Ball_Pos.X := Standard.Natural(Ball_Pos_X);
-      end if;
-
-      Display.Hidden_Buffer (1).Set_Source (BG);
-      Display.Hidden_Buffer (1).Fill;
-
-      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
-      Display.Hidden_Buffer (1).Fill_Circle (Ball_Pos, 10);
-
+      -- Send(Axes.X'Image & "," & Axes.Y'Image & "," & Axes.Z'Image & NL);
+      declare
+         Pos_X : Angle := Angle(Middle_Pos.X) + Axes.Y;
+         Pos_Y : Angle := Angle(Middle_Pos.Y) + Axes.X;
+      begin
+         if Pos_X < 10 then
+            Pos_X := 10;
+         elsif Pos_X > Width then
+            Pos_X := Width;
+         end if;
+         if Pos_Y < 10 then
+            Pos_Y := 10;
+         elsif Pos_Y > Height then
+            Pos_Y := Height;
+         end if;
+         Ball_Pos.X := Standard.Natural(Pos_X);
+         Ball_Pos.Y := Standard.Natural(Pos_Y);
+      end;
+      Background_Display;
 
       declare
          State : constant TP_State := Touch_Panel.Get_All_Touch_Points;
       begin
-         case State'Length is
-            when 1 =>
-               Ball_Pos := (State (State'First).X, State (State'First).Y);
-            when others =>
-               if Speed <= 0 then
-                  Is_Down := True;
-               end if;
-               if Is_Down then
-                  if Ball_Pos.Y - Speed <= 0 then
-                     Is_Down := False;
-                     Ball_Pos.Y := 0;
-                     Speed := Speed - Gravity;
-                  else
-                     Ball_Pos.Y := Ball_Pos.Y - Speed;
-                     Speed := Speed + Gravity;
-                  end if;
-               else
-                  Ball_Pos.Y := Ball_Pos.Y + Speed;
-                  Speed := Speed - Gravity;
-               end if;
-
-         end case;
+         if State'Length = 1 then
+            Ball_Pos := Middle_Pos;
+            gyroscope.Reset_Gyro;
+         end if;
       end;
+
+      if Gyro_To_Keyboard(Axes, kb) then
+         kb.Send_Report(uart);
+      end if;
+
+      Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
+      Display.Hidden_Buffer (1).Fill_Circle (Ball_Pos, 5);
 
       --  Update screen
       Display.Update_Layer (1, Copy_Back => True);
