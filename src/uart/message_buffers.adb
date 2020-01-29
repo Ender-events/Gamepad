@@ -151,4 +151,40 @@ package body Message_Buffers is
       Set_True (This.Reception_Complete);
    end Signal_Reception_Complete;
 
+   ----------------
+   -- Note_Error --
+   ----------------
+
+   procedure Note_Error (This : in out Message; Condition : Error_Conditions) is
+   begin
+      This.Error_Status := This.Error_Status or Condition;
+   end Note_Error;
+
+   ---------------------
+   -- Errors_Detected --
+   ---------------------
+
+   function Errors_Detected (This : Message) return Error_Conditions is
+   begin
+      return This.Error_Status;
+   end Errors_Detected;
+
+   ------------------
+   -- Clear_Errors --
+   ------------------
+
+   procedure Clear_Errors (This : in out Message) is
+   begin
+      This.Error_Status := No_Error_Detected;
+   end Clear_Errors;
+
+   ---------------
+   -- Has_Error --
+   ---------------
+
+   function Has_Error (This : Message; Condition : Error_Conditions) return Boolean is
+   begin
+      return (This.Error_Status and Condition) /= 0;
+   end Has_Error;
+
 end Message_Buffers;

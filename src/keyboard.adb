@@ -1,5 +1,3 @@
-with Message_Buffers;            use Message_Buffers;
-
 package body keyboard
 with SPARK_Mode => On
 is
@@ -84,7 +82,6 @@ is
                           uart : in out IO_Interface.IO_InterfaceNT'Class)
      with SPARK_Mode => Off -- Can't use spark with uart
    is
-      Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
       data : String(1 .. 8) := (others => Character'Val(0));
       key_status : Key_Status_Type := This.report.Key_Status;
       key_status_buf : Character
@@ -94,8 +91,7 @@ is
       for I in Keypress_array_index loop
          data(Integer(I + 2)) := Character'Val(This.report.Keypress(I)'Enum_Rep);
       end loop;
-      Outgoing.Set(data);
-      uart.Write(Outgoing'Unchecked_Access);
+      uart.Write(data);
    end;
 
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean is

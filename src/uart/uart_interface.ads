@@ -7,7 +7,7 @@ package UART_Interface is
 
    procedure Initiliaze_UART (This : out UART_InterfaceNT);
 
-   overriding procedure Write(This: UART_InterfaceNT; msg: access Message_Buffers.Message);
+   overriding procedure Write(This: UART_InterfaceNT; msg: String);
 
 
 private
