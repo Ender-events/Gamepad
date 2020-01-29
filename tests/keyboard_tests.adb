@@ -14,7 +14,7 @@ package body Keyboard_Tests is
 
    procedure Test_Is_Key_Press is
    begin
-      Assert(true);
+      Assert(true, "bite");
    end Test_Is_Key_Press;
 
 end Keyboard_Tests;

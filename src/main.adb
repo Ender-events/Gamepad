@@ -168,11 +168,6 @@ begin
 
    -- Initialize UART
    uart.Initiliaze_UART;
-
-   -- FIXME - a mettre dans uart_interface
-   --Initialize(COM);
-   --Configure (COM, Baud_Rate => 115_200);
-
    -- Send ("Welcome to bouncing ball simulator." & NL);
    kb.Initiliaze_Keyboard;
    -- kb.Key_Press(key => Left_Shift);

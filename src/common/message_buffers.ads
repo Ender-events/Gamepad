@@ -29,7 +29,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Serial_IO;                     use Serial_IO;
 with Ada.Synchronous_Task_Control;  use Ada.Synchronous_Task_Control;
 
 package Message_Buffers is
@@ -87,15 +86,7 @@ package Message_Buffers is
 
    procedure Signal_Reception_Complete (This : in out Message) with Inline;
 
-   procedure Note_Error (This : in out Message; Condition : Error_Conditions)
-     with Inline;
 
-   function Errors_Detected (This : Message) return Error_Conditions with Inline;
-
-   procedure Clear_Errors (This : in out Message) with Inline;
-
-   function Has_Error (This : Message; Condition : Error_Conditions)
-      return Boolean with Inline;
 
 private
 
@@ -105,7 +96,6 @@ private
       Reception_Complete    : Suspension_Object;
       Transmission_Complete : Suspension_Object;
       Terminator            : Character := ASCII.NUL;
-      Error_Status          : Error_Conditions := No_Error_Detected;
    end record;
 
 end Message_Buffers;
