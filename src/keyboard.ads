@@ -1,4 +1,5 @@
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
+with IO_Interface;
 
 package keyboard
 with SPARK_Mode => On
@@ -40,7 +41,8 @@ is
       Right_Alt       => 16#e6#,
       Right_GUI       => 16#e7#
      );
-   subtype KeyCodeModifier is KeyCode range Left_Ctrl .. Right_GUI;
+
+   subtype CtrlKeyCode is KeyCode range Left_Ctrl .. Right_GUI;
 
    type Keypress_array_index is range 1 .. 6;
    type Keypress_array is array (Keypress_array_index) of KeyCode;
@@ -121,24 +123,10 @@ is
    function Is_Key_Press(This : in Keyboard; key : KeyCode) return Boolean
      with
        Global => null,
-       Pre'Class => This.Initialized = True,
-       Post'Class => (case key is
-         when Left_Shift => This.report.Key_Status.Left_Shift = Is_Key_Press'Result,
-         when Left_Ctrl => This.report.Key_Status.Left_Ctrl = Is_Key_Press'Result,
-         when Left_Alt => This.report.Key_Status.Left_Alt = Is_Key_Press'Result,
-         when Left_GUI => This.report.Key_Status.Left_GUI = Is_Key_Press'Result,
-         when Right_Shift => This.report.Key_Status.Right_Shift = Is_Key_Press'Result,
-         when Right_Ctrl => This.report.Key_Status.Right_Ctrl = Is_Key_Press'Result,
-         when Right_Alt => This.report.Key_Status.Right_Alt = Is_Key_Press'Result,
-         when Right_GUI => This.report.Key_Status.Right_GUI = Is_Key_Press'Result,
-         when others => (if (Is_Key_Press'Result) then
-                        (for some I in Keypress_array'Range => This.report.Keypress(I) = key)
-                          else
-                           (for all I in Keypress_array'Range => This.report.Keypress(I) /= key)
-                        ));
+       Pre'Class => This.Initialized = True;
 
    procedure Send_Report (This : in out Keyboard;
-                          uart : in out Serial_Port)
+                          uart : in out IO_Interface.IO_InterfaceNT'Class)
      with
        SPARK_Mode => Off,
        Global => null,

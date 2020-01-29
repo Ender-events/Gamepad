@@ -40,6 +40,7 @@ is
    procedure Key_Release (kb : in out keyboard; key : KeyCode) is
       J : Keypress_array_index := 1;
    begin
+      pragma Assert(kb.Is_Key_Press(key));
       if Is_Modifier_Status_Key(key) then
          Update_Modifier_Status_Key(kb, key, False);
       else
@@ -80,7 +81,7 @@ is
    end;
 
    procedure Send_Report (This : in out Keyboard;
-                          uart : in out Serial_Port)
+                          uart : in out IO_Interface.IO_InterfaceNT'Class)
      with SPARK_Mode => Off -- Can't use spark with uart
    is
       Outgoing : aliased Message (Physical_Size => 1024);  -- arbitrary size
@@ -94,19 +95,12 @@ is
          data(Integer(I + 2)) := Character'Val(This.report.Keypress(I)'Enum_Rep);
       end loop;
       Outgoing.Set(data);
-      uart.Put(Outgoing'Unchecked_Access);
+      uart.Write(Outgoing'Unchecked_Access);
    end;
 
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean is
    begin
-      return (key = Left_Ctrl
-              or else key = Left_Shift
-              or else key = Left_Alt
-              or else key = Left_GUI
-              or else key = Right_Ctrl
-              or else key = Right_Shift
-              or else key = Right_Alt
-              or else key = Right_GUI);
+      return key in CtrlKeyCode;
    end;
 
 

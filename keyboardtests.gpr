@@ -1,0 +1,8 @@
+with "ahven/gnat/ahven.gpr";
+
+project KeyboardTests is
+   for Source_Dirs use ("tests/**", "src/**");
+   for Object_Dir use "tests_obj";
+   for Exec_Dir use ".";
+   for Main use ("runner.adb");
+end KeyboardTests;
