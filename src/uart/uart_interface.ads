@@ -1,17 +1,19 @@
 with Message_Buffers;
-with IO_Interface;
+with IO_Interface_Types;
 with Serial_IO.Nonblocking; use Serial_IO.Nonblocking;
 
 package UART_Interface is
-   type UART_InterfaceNT is limited new IO_Interface.IO_InterfaceNT with private;
+   type UARTInterface is limited new IO_Interface_Types.IO_Interface with private;
 
-   procedure Initiliaze_UART (This : out UART_InterfaceNT);
+   overriding
+   procedure Initialize_UART (This : in out UARTInterface);
 
-   overriding procedure Write(This: UART_InterfaceNT; msg: String);
-
+   overriding
+   procedure Write (This : in out UARTInterface;
+                    Msg  : String);
 
 private
-   type UART_InterfaceNT is limited new IO_Interface.IO_InterfaceNT with record
+   type UARTInterface is limited new IO_Interface_Types.IO_Interface with record
       Initialized : Boolean := False;
    end record;
 

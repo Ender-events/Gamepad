@@ -42,7 +42,8 @@ with STM32.User_Button;     use STM32;
 with BMP_Fonts;
 with LCD_Std_Out;
 with gyroscope; use gyroscope;
-with keyboard;              use keyboard;
+with Keyboard_Interface; use Keyboard_Interface;
+with HID_Interface;              use HID_Interface;
 
 with Peripherals_Nonblocking;    use Peripherals_Nonblocking;
 with Serial_IO.Nonblocking;      use Serial_IO.Nonblocking;
@@ -66,53 +67,61 @@ procedure Main is
    Height : constant Angle := 220;
    Prev : Time := Clock;
    Cur : Time;
-   dt : Duration;
-   kb : keyboard.Keyboard;
-   uart : UART_Interface.UART_InterfaceNT;
+   Dur : Duration;
+   Kbrd : Keyboard;
+   UART : UART_Interface.UARTInterface;
 
 
-   function Gyro_To_Keyboard (gyro: Angles; kb: in out keyboard.Keyboard) return Boolean is
-      change: Boolean := False;
+   function Gyro_To_Keyboard (Gyro: Angles;
+                              Kbrd: in out Keyboard)
+                              return Boolean
+   is
+      Change: Boolean := False;
    begin
-      if gyro.X > 15 then
-         change := kb.Checked_Key_Press(key => Q) or change;
-      elsif kb.Is_Key_Press(key => Q) then
-         kb.Key_Release(key => Q);
-         change := True;
+      if Gyro.X > 15 then
+         Change := Kbrd.Checked_Key_Press (Key => Q) or Change;
+      elsif Kbrd.Is_Key_Press (Key => Q) then
+         Kbrd.Key_Release (Key => Q);
+         Change := True;
       end if;
-      if gyro.X < -15 then
-         change := kb.Checked_Key_Press(key => D) or change;
-      elsif kb.Is_Key_Press(key => D) then
-         kb.Key_Release(key => D);
-         change := True;
+
+      if Gyro.X < -15 then
+         Change := Kbrd.Checked_Key_Press (Key => D) or Change;
+      elsif Kbrd.Is_Key_Press (Key => D) then
+         Kbrd.Key_Release (Key => D);
+         Change := True;
       end if;
-      if gyro.Y < -15 then
-         change := kb.Checked_Key_Press(key => Z) or change;
-      elsif kb.Is_Key_Press(key => Z) then
-         kb.Key_Release(key => Z);
-         change := True;
+
+      if Gyro.Y < -15 then
+         Change := Kbrd.Checked_Key_Press (Key => Z) or Change;
+      elsif Kbrd.Is_Key_Press (Key => Z) then
+         Kbrd.Key_Release (Key => Z);
+         Change := True;
       end if;
-      if gyro.Y > 15 then
-         change := kb.Checked_Key_Press(key => S) or change;
-      elsif kb.Is_Key_Press(key => S) then
-         kb.Key_Release(key => S);
-         change := True;
+
+      if Gyro.Y > 15 then
+         Change := Kbrd.Checked_Key_Press (Key => S) or Change;
+      elsif Kbrd.Is_Key_Press (Key => S) then
+         Kbrd.Key_Release (Key => S);
+         Change := True;
       end if;
+
       -- TODO: Use radius instead ?
-      if ((gyro.X > 15 and then gyro.X < 40) or else (gyro.Y > 15 and then gyro.Y < 40))
-        or else ((gyro.X < -15 and then gyro.X > -40) or else (gyro.Y < -15 and then gyro.Y > -40)) then
-         change := kb.Checked_Key_Press(key => Left_Ctrl) or change;
-      elsif kb.Is_Key_Press(key => Left_Ctrl) then
-         kb.Key_Release(key => Left_Ctrl);
-         change := True;
+      if ((Gyro.X > 15 and then Gyro.X < 40) or else (Gyro.Y > 15 and then Gyro.Y < 40))
+        or else ((Gyro.X < -15 and then Gyro.X > -40) or else (Gyro.Y < -15 and then Gyro.Y > -40)) then
+         Change := Kbrd.Checked_Key_Press (Key => Left_Ctrl) or Change;
+      elsif Kbrd.Is_Key_Press (Key => Left_Ctrl) then
+         Kbrd.Key_Release (Key => Left_Ctrl);
+         Change := True;
       end if;
-      if gyro.X > 65 or else gyro.Y > 65  or else gyro.X < -65 or else gyro.Y < -65 then
-         change := kb.Checked_Key_Press(key => Left_Shift) or change;
-      elsif kb.Is_Key_Press(key => Left_Shift) then
-         kb.Key_Release(key => Left_Shift);
-         change := True;
+
+      if Gyro.X > 65 or else Gyro.Y > 65  or else Gyro.X < -65 or else Gyro.Y < -65 then
+         Change := Kbrd.Checked_Key_Press (Key => Left_Shift) or Change;
+      elsif Kbrd.Is_Key_Press (Key => Left_Shift) then
+         Kbrd.Key_Release (Key => Left_Shift);
+         Change := True;
       end if;
-      return change;
+      return Change;
    end;
 
    procedure Send (This : String) is
@@ -167,9 +176,10 @@ begin
    Configure_Gyro;
 
    -- Initialize UART
-   uart.Initiliaze_UART;
+
+   UART.Initialize_UART;
    -- Send ("Welcome to bouncing ball simulator." & NL);
-   kb.Initiliaze_Keyboard;
+   Kbrd.Initiliaze_Keyboard;
    -- kb.Key_Press(key => Left_Shift);
    -- kb.Key_Press(key => Right_GUI);
    -- kb.Key_Press(key => Z);
@@ -179,30 +189,33 @@ begin
    loop
       if User_Button.Has_Been_Pressed then
          BG := HAL.Bitmap.Dark_Orange;
-         kb.Send_Report(uart);
+         Kbrd.Send_Report (UART);
       end if;
       Cur := Clock;
-      dt := Ada.Real_Time.To_Duration(Cur - Prev);
+      Dur := Ada.Real_Time.To_Duration(Cur - Prev);
       Prev := Cur;
-      Axes := Update_Gyro(dt);
+      Axes := Update_Gyro (Dur);
       -- Send(Axes.X'Image & "," & Axes.Y'Image & "," & Axes.Z'Image & NL);
       declare
-         Pos_X : Angle := Angle(Middle_Pos.X) + Axes.Y;
-         Pos_Y : Angle := Angle(Middle_Pos.Y) + Axes.X;
+         Pos_X : Angle := Angle (Middle_Pos.X) + Axes.Y;
+         Pos_Y : Angle := Angle (Middle_Pos.Y) + Axes.X;
       begin
          if Pos_X < 10 then
             Pos_X := 10;
          elsif Pos_X > Width then
             Pos_X := Width;
          end if;
+
          if Pos_Y < 10 then
             Pos_Y := 10;
          elsif Pos_Y > Height then
             Pos_Y := Height;
          end if;
-         Ball_Pos.X := Standard.Natural(Pos_X);
-         Ball_Pos.Y := Standard.Natural(Pos_Y);
+
+         Ball_Pos.X := Standard.Natural (Pos_X);
+         Ball_Pos.Y := Standard.Natural (Pos_Y);
       end;
+
       Background_Display;
 
       declare
@@ -214,8 +227,8 @@ begin
          end if;
       end;
 
-      if Gyro_To_Keyboard(Axes, kb) then
-         kb.Send_Report(uart);
+      if Gyro_To_Keyboard (Axes, Kbrd) then
+         Kbrd.Send_Report (UART);
       end if;
 
       Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
