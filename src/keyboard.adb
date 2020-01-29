@@ -95,7 +95,7 @@ is
          data(Integer(I + 2)) := Character'Val(This.report.Keypress(I)'Enum_Rep);
       end loop;
       Outgoing.Set(data);
-      --uart.Write(Outgoing'Unchecked_Access);
+      uart.Write(Outgoing'Unchecked_Access);
    end;
 
    function Is_Modifier_Status_Key (key : KeyCode) return Boolean is

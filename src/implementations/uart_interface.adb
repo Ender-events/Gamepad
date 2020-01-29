@@ -4,6 +4,7 @@ package body UART_Interface is
 
    procedure Initiliaze_UART (This : out UART_InterfaceNT) is
    begin
+      Initialize(COM);
       Configure(COM, Baud_Rate => 115_200);
       This.Initialized := True;
    end;
