@@ -19,7 +19,12 @@ is
         with SPARK_Mode => Off -- Can't have in out in function
    is
    begin
-      return True;
+      if False then
+         return False;
+      else
+         This.Key_Press (Key);
+         return True;
+      end if;
    end Checked_Key_Press;
 
    procedure Key_Press (This : in out Keyboard;
@@ -38,8 +43,30 @@ is
    overriding
    procedure Key_Release (This : in out Keyboard;
                           Key : KeyCode) is
+        J : KeyPress_Array_Index := 1;
    begin
-     null;
+      if Is_Modifier_Status_Key (Key) then
+         Update_Modifier_Status_Key (This, Key, False);
+      else
+         pragma Assert(for some I in KeyPress_Array'Range => This.Report.KeyPress (I) = Key);
+
+         for I in KeyPress_Array_Index'First .. KeyPress_Array_Index (This.Num_Key) loop
+            pragma Assert(((J = I and then
+                            (for all K in KeyPress_Array_Index'First .. I - 1 => This.Report.KeyPress (K) /= Key)) or else
+                              (J < I)) and then
+                            (J /= 6 or else This.Report.KeyPress (J) = Key));
+
+            This.Report.KeyPress (J) := This.Report.KeyPress (I);
+
+            if This.Report.KeyPress (J) /= Key then
+               J := J + 1;
+            end if;
+         end loop;
+
+         This.Report.KeyPress (J) := None;
+         -- TODO: find a way to say they have a unique value of the key to be remove
+         This.Num_Key := This.Num_Key - 1;
+      end if;
    end Key_Release;
 
    overriding
@@ -65,7 +92,7 @@ is
             return This.Report.Key_Status.Right_GUI;
          when others =>
             for I in KeyPress_Array_Index'Range loop
-               if This.Report.KeyPress (I) = key then
+               if This.Report.KeyPress (I) = Key then
                   return True;
                end if;
             end loop;
