@@ -10,6 +10,12 @@ other is a USB stack to transmit informations. All code is written in ADA.
 
 ## How to build it
 
+In order to build the project you just have to follow the two next steps, once
+the card is plugged to your computer.
+
+* `gprbuild --target=arm-eabi -d -P prj.gpr -XLCH=led =XRTS_Profile=ravenscar-sfp -XLOADER=ROM -XADL_BUILD_CHECKS=Enabled src/main/adb -largs -Wl,-Map=map.txt`
+* `st-flash obj/main 0x80000` 
+
 ## Behaviour
 
 The command are sent generated using the gyroscope of the card. On launch, the
