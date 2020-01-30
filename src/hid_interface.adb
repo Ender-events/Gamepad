@@ -19,7 +19,7 @@ is
         with SPARK_Mode => Off -- Can't have in out in function
    is
    begin
-      if False then
+      if Is_Key_Press (This, Key) then
          return False;
       else
          This.Key_Press (Key);
@@ -45,6 +45,7 @@ is
                           Key : KeyCode) is
         J : KeyPress_Array_Index := 1;
    begin
+      pragma Assert (Is_Key_Press (This, Key));
       if Is_Modifier_Status_Key (Key) then
          Update_Modifier_Status_Key (This, Key, False);
       else
