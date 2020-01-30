@@ -54,9 +54,13 @@ is sent through UART with transmission pin at PA9 and reception pin at PA10.
 In order to use the gamepad with a computer, or any other device, it is necessary
 use a USB Stack and register as an HID controller. Nevertheless, there is no such
 stack in the Ada Driver Library. One of the aim of this project was to add this
-stack. This work is compiling for now but does not do a thing. It is based on 
-Fabien Chouteau's prototype. We took what was present and added some part in our implementation.
-We did not have much time left on debug. So we keep our implementation with transmission via UART. Nevertheless, we think about seeing afterwards to make this stack work and make it, if possible, integrated in ADA Drivers Library.
+stack. This work is compiling for now but does not do a thing. It is based on
+Fabien Chouteau's prototype. We took what was present and added some part in our
+implementation. We did not have much time left on debug. So we keep our
+implementation with transmission via UART. Nevertheless, we think about seeing
+afterwards to make this stack work and make it, if possible, integrated in
+ADA Drivers Library, as it was really interesting for our group to work on
+it.
 
 ## Contracts
 
