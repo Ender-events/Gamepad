@@ -14,7 +14,7 @@ other is a USB stack to transmit informations. All code is written in ADA.
 
 The command are sent generated using the gyroscope of the card. On launch, the
 user will see a target on the screen of the card. This target contains all the
-information for the user to send datas to the computer. In fact, the cursor
+information for the user to send data to the computer. In fact, the cursor
 is the orientation, and the colors are the command being sent.
 When the sensor is tilted forward, The `Z` keycode is send, backward `S`
 keycode, to the left with `Q` and to the right with `D`. We can mix two keycode
@@ -25,7 +25,7 @@ Each color corresponds to a command and a modifier status key.
 - Yellow: Just the orientation
 - Red: Orientation + Left Shift
 
-The datas are then sent through USB, if USB is connected, or through UART.
+The data are then sent through USB, if USB is connected, or through UART.
 The UART part is working fine, however, you may have trouble using the USB
 stack as it is incomplete.
 
