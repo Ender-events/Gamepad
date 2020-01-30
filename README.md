@@ -66,10 +66,9 @@ it.
 
 In order to have good control over our code, we chose to write contracts
 for our Gamepad functions. Those contracts can be found as Pre and Post
-conditions, but also Pre'Class and Post'Class, Predicates and asserts. The
-final effect of all that is that we can prove a good part of our code with
-Spark.
-About Spark, it is disabled on few functions that can't be proven.
+conditions, but also Predicates and asserts. This
+is useful for us because it documents and tests our code at the same time.
+Moreover
 
 ## Authors
 
