@@ -74,7 +74,6 @@ In order to have good control over our code, we chose to write contracts
 for our Gamepad functions. Those contracts can be found as Pre and Post
 conditions, but also Predicates and asserts. This
 is useful for us because it documents and tests our code at the same time.
-Moreover
 
 ## Authors
 
