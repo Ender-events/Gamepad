@@ -36,7 +36,7 @@ stack as it is incomplete.
 The Gamepad uses an in-board L3GD20 gyroscope and the driver from ADA driver
 library. To reduce the drift, at the beginning, the average of zero motion raw
 data of the gyroscope is computed. For each raw data given, the average is
-removed and data is filtered through a high-pass filter from W3C Working Group
+removed and data are filtered through a high-pass filter from W3C Working Group
 Note for Motion Sensors.
 With this fixed angular velocity, a discrete integration is done with initial
 value to 0°.
