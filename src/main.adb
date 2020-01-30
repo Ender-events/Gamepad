@@ -98,17 +98,16 @@ begin
    -- Initialize UART
 
    UART.Initialize_UART;
-   -- Send ("Welcome to bouncing ball simulator." & NL);
    Kbrd.Initiliaze_Keyboard;
-   -- kb.Key_Press(key => Left_Shift);
-   -- kb.Key_Press(key => Right_GUI);
-   -- kb.Key_Press(key => Z);
-   -- kb.Key_Press(key => Q);
 
 
    loop
       if User_Button.Has_Been_Pressed then
-         BG := HAL.Bitmap.Dark_Orange;
+         if Kbrd.Checked_Key_Press (Key => Space) then
+            Kbrd.Send_Report (UART);
+         end if;
+      elsif Kbrd.Is_Key_Press (Key => Space) then
+         Kbrd.Key_Release (Key => Space);
          Kbrd.Send_Report (UART);
       end if;
       Cur := Clock;
